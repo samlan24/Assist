@@ -4,6 +4,8 @@ from scrapy.linkextractors import LinkExtractor
 from mandevu.utils.seo_rules import SEORuleChecker
 from mandevu.utils.together_ai import get_recommendations
 import time
+import os
+import subprocess
 
 class SEOAuditSpider(scrapy.Spider):
     name = "seo_audit"
@@ -70,7 +72,7 @@ class SEOAuditSpider(scrapy.Spider):
         hreflang_tags = response.xpath("//link[@rel='alternate']/@hreflang").getall()
         viewport = response.xpath("//meta[@name='viewport']/@content").get(default="")
 
-        # Measure page load time
+
         start_time = time.time()
         response.follow(response.url)
         load_time = time.time() - start_time
@@ -103,7 +105,7 @@ class SEOAuditSpider(scrapy.Spider):
         rule_checker = SEORuleChecker(seo_data)
         issues = rule_checker.analyze()
         seo_data["issues_detected"] = issues
-        seo_data["Recommendations"] = get_recommendations(issues)
+        seo_data["ai_recommendations"] = get_recommendations(issues)
 
         self.results.append(seo_data)
 
@@ -111,3 +113,11 @@ class SEOAuditSpider(scrapy.Spider):
         for link in internal_links:
             if link not in self.visited_links:
                 yield response.follow(link, callback=self.parse)
+
+
+    def close_spider(self, spider):
+        """Runs the report generator after Scrapy finishes crawling."""
+        print("✅ Scrapy crawl complete. Generating SEO report...")
+
+        script_path = os.path.join("utils", "generate_report.py")
+        subprocess.run(["python", script_path])
