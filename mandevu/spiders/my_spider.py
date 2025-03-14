@@ -2,6 +2,7 @@ import scrapy
 import json
 from scrapy.linkextractors import LinkExtractor
 from mandevu.utils.seo_rules import SEORuleChecker
+from mandevu.utils.content_analyzer import analyze_content
 import time
 
 class SEOAuditSpider(scrapy.Spider):
@@ -74,6 +75,11 @@ class SEOAuditSpider(scrapy.Spider):
         response.follow(response.url)
         load_time = time.time() - start_time
 
+        content = response.xpath("//body//text()").getall()
+        content = " ".join(content).strip()
+
+        content_analysis = analyze_content(content)
+
         seo_data = {
             "url": response.url,
             "meta_title": meta_title,
@@ -97,6 +103,7 @@ class SEOAuditSpider(scrapy.Spider):
             "hreflang_tags": hreflang_tags,
             "viewport": viewport,
             "load_time": load_time,
+            "content_analysis": content_analysis,
         }
 
         rule_checker = SEORuleChecker(seo_data)
