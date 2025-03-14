@@ -32,14 +32,30 @@ class SEORuleChecker:
             self.issues.append("Page is set to noindex (won't appear in search results).")
 
     def check_headings(self):
-        """Check for missing or multiple H1 tags."""
-        h1_tags = self.seo_data.get("h1_tags", [])
+        """Ensure proper heading hierarchy (H1-H6) and check for missing or multiple H1 tags."""
+        headings = {
+            "h1": self.seo_data.get("h1_tags", []),
+            "h2": self.seo_data.get("h2_tags", []),
+            "h3": self.seo_data.get("h3_tags", []),
+            "h4": self.seo_data.get("h4_tags", []),
+            "h5": self.seo_data.get("h5_tags", []),
+            "h6": self.seo_data.get("h6_tags", [])
+        }
 
-        h1_count = len(h1_tags)
-        if not h1_tags:
+        h1_count = len(headings["h1"])
+        if not headings["h1"]:
             self.issues.append("No H1 tag found on the page. Each page should have one main H1 tag for SEO.")
         elif h1_count > 1:
             self.issues.append(f"⚠️ Multiple H1 tags found ({h1_count}). Ensure only one main H1 for clarity.")
+
+        heading_order = ["h1", "h2", "h3", "h4", "h5", "h6"]
+        last_level = 0
+
+        for level in heading_order:
+            if headings[level]:
+                if last_level and int(level[1]) > last_level + 1:
+                    self.issues.append(f"⚠️ Heading structure issue: Found {level} without an H{last_level} above it.")
+                last_level = int(level[1]) if headings[level] else last_level
 
     def check_internal_links(self):
         """Ensure there are enough internal links."""
