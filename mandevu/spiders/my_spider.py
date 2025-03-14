@@ -2,6 +2,7 @@ import scrapy
 import json
 from scrapy.linkextractors import LinkExtractor
 from mandevu.utils.seo_rules import SEORuleChecker
+import time
 
 class SEOAuditSpider(scrapy.Spider):
     name = "seo_audit"
@@ -10,6 +11,7 @@ class SEOAuditSpider(scrapy.Spider):
 
     handle_httpstatus_list = [404]
     visited_links = set()
+    results = []
 
     def parse(self, response):
         """Extracts SEO data and follows internal links."""
@@ -41,13 +43,36 @@ class SEOAuditSpider(scrapy.Spider):
         h6_tags = [tag.strip() for tag in response.xpath("//h6//text()").getall()]
 
         image_data = [
-            {"src": response.urljoin(img), "alt": response.xpath(f"//img[@src='{img}']/@alt").get(default="No Alt Text")}
+            {
+                "src": response.urljoin(img),
+                "alt": response.xpath(f"//img[@src='{img}']/@alt").get(default="No Alt Text"),
+                "size": response.xpath(f"//img[@src='{img}']/@size").get(default=0),
+                "status": response.xpath(f"//img[@src='{img}']/@status").get(default=200)
+            }
             for img in response.xpath("//img/@src").getall()
         ]
 
-        # Extract sitemap and robots.txt if available
-        sitemap = response.xpath("//link[@rel='sitemap']/@href").get(default="")
-        robots_txt = response.xpath("//meta[@name='robots']/@content").get(default="")
+        # Extract additional elements
+        structured_data = response.xpath("//script[@type='application/ld+json']/text()").getall()
+        open_graph_data = {
+            "og:title": response.xpath("//meta[@property='og:title']/@content").get(default=""),
+            "og:description": response.xpath("//meta[@property='og:description']/@content").get(default=""),
+            "og:image": response.xpath("//meta[@property='og:image']/@content").get(default=""),
+            "og:url": response.xpath("//meta[@property='og:url']/@content").get(default="")
+        }
+        twitter_card_data = {
+            "twitter:title": response.xpath("//meta[@name='twitter:title']/@content").get(default=""),
+            "twitter:description": response.xpath("//meta[@name='twitter:description']/@content").get(default=""),
+            "twitter:image": response.xpath("//meta[@name='twitter:image']/@content").get(default=""),
+            "twitter:url": response.xpath("//meta[@name='twitter:url']/@content").get(default="")
+        }
+        hreflang_tags = response.xpath("//link[@rel='alternate']/@hreflang").getall()
+        viewport = response.xpath("//meta[@name='viewport']/@content").get(default="")
+
+        # Measure page load time
+        start_time = time.time()
+        response.follow(response.url)
+        load_time = time.time() - start_time
 
         seo_data = {
             "url": response.url,
@@ -66,13 +91,19 @@ class SEOAuditSpider(scrapy.Spider):
             "external_links_count": len(external_links),
             "external_links": external_links,
             "image_data": image_data,
-            "sitemap": sitemap,
-            "robots_txt": robots_txt,
+            "structured_data": structured_data,
+            "open_graph_data": open_graph_data,
+            "twitter_card_data": twitter_card_data,
+            "hreflang_tags": hreflang_tags,
+            "viewport": viewport,
+            "load_time": load_time,
         }
 
         rule_checker = SEORuleChecker(seo_data)
         issues = rule_checker.analyze()
         seo_data["issues_detected"] = issues
+
+        self.results.append(seo_data)
 
         yield seo_data
         for link in internal_links:

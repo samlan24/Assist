@@ -81,6 +81,18 @@ class SEORuleChecker:
             if img.get("alt") == "No Alt Text":
                 self.issues.append(f"⚠️ Image missing alt text: {img['src']}")
 
+    def check_large_images(self):
+        """Check for large image files."""
+        for img in self.seo_data.get("image_data", []):
+            if img.get("size", 0) > 100000:  # Example threshold: 100KB
+                self.issues.append(f"⚠️ Large image file: {img['src']} ({img['size']} bytes)")
+
+    def check_broken_images(self):
+        """Check for broken images (404s)."""
+        for img in self.seo_data.get("image_data", []):
+            if img.get("status", 200) == 404:
+                self.issues.append(f"⚠️ Broken image found: {img['src']}")
+
     def check_sitemap(self):
         """Check if sitemap is present."""
         sitemap = self.seo_data.get("sitemap", "")
@@ -98,6 +110,54 @@ class SEORuleChecker:
         if not self.seo_data.get("url", "").startswith("https://"):
             self.issues.append("Page is not served over HTTPS.")
 
+    def check_structured_data(self):
+        """Check for the presence of structured data."""
+        structured_data = self.seo_data.get("structured_data", [])
+        if not structured_data:
+            self.issues.append("Missing structured data.")
+
+    def check_open_graph(self):
+        """Check for Open Graph metadata."""
+        og_data = self.seo_data.get("open_graph_data", {})
+        if not og_data.get("og:title"):
+            self.issues.append("Missing Open Graph title.")
+        if not og_data.get("og:description"):
+            self.issues.append("Missing Open Graph description.")
+        if not og_data.get("og:image"):
+            self.issues.append("Missing Open Graph image.")
+        if not og_data.get("og:url"):
+            self.issues.append("Missing Open Graph URL.")
+
+    def check_twitter_cards(self):
+        """Check for Twitter Card metadata."""
+        twitter_data = self.seo_data.get("twitter_card_data", {})
+        if not twitter_data.get("twitter:title"):
+            self.issues.append("Missing Twitter Card title.")
+        if not twitter_data.get("twitter:description"):
+            self.issues.append("Missing Twitter Card description.")
+        if not twitter_data.get("twitter:image"):
+            self.issues.append("Missing Twitter Card image.")
+        if not twitter_data.get("twitter:url"):
+            self.issues.append("Missing Twitter Card URL.")
+
+    def check_hreflang(self):
+        """Check for hreflang tags."""
+        hreflang_tags = self.seo_data.get("hreflang_tags", [])
+        if not hreflang_tags:
+            self.issues.append("Missing hreflang tags.")
+
+    def check_viewport(self):
+        """Check for meta viewport tag."""
+        viewport = self.seo_data.get("viewport", "")
+        if not viewport:
+            self.issues.append("Missing meta viewport tag.")
+
+    def check_load_time(self):
+        """Check if the page load time is too high."""
+        load_time = self.seo_data.get("load_time", 0)
+        if load_time > 3:
+            self.issues.append(f"⚠️ Page load time is too high: {load_time:.2f} seconds.")
+
     def analyze(self):
         """Run all SEO checks and return a list of issues."""
         self.check_meta_tags()
@@ -108,7 +168,15 @@ class SEORuleChecker:
         self.check_external_links()
         self.check_broken_links()
         self.check_image_optimization()
+        self.check_large_images()
+        self.check_broken_images()
         self.check_sitemap()
         self.check_robots_txt()
         self.check_https()
+        self.check_structured_data()
+        self.check_open_graph()
+        self.check_twitter_cards()
+        self.check_hreflang()
+        self.check_viewport()
+        self.check_load_time()
         return self.issues
