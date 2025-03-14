@@ -28,7 +28,7 @@ class SEOAuditSpider(scrapy.Spider):
         internal_links = {
             response.urljoin(link)
             for link in all_links
-            if link.startswith("/") or link.startswith(self.start_urls[0]) or not link.startswith("http")
+            if (link.startswith("/") or link.startswith(self.start_urls[0]) or not link.startswith("http")) and not link.startswith("mailto:")
         }
 
         external_links = [link for link in all_links if not link.startswith("/") and not link.startswith(self.start_urls[0])]
@@ -119,5 +119,6 @@ class SEOAuditSpider(scrapy.Spider):
         """Runs the report generator after Scrapy finishes crawling."""
         print("✅ Scrapy crawl complete. Generating SEO report...")
 
-        script_path = os.path.join("utils", "generate_report.py")
-        subprocess.run(["python", script_path])
+        script_dir = os.path.dirname(__file__)
+        script_path = os.path.join(script_dir, "..", "utils", "generate_report.py")
+        subprocess.run(["python3", script_path])
