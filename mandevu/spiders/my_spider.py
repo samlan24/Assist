@@ -45,6 +45,10 @@ class SEOAuditSpider(scrapy.Spider):
             for img in response.xpath("//img/@src").getall()
         ]
 
+        # Extract sitemap and robots.txt if available
+        sitemap = response.xpath("//link[@rel='sitemap']/@href").get(default="")
+        robots_txt = response.xpath("//meta[@name='robots']/@content").get(default="")
+
         seo_data = {
             "url": response.url,
             "meta_title": meta_title,
@@ -62,6 +66,8 @@ class SEOAuditSpider(scrapy.Spider):
             "external_links_count": len(external_links),
             "external_links": external_links,
             "image_data": image_data,
+            "sitemap": sitemap,
+            "robots_txt": robots_txt,
         }
 
         rule_checker = SEORuleChecker(seo_data)

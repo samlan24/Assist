@@ -81,6 +81,23 @@ class SEORuleChecker:
             if img.get("alt") == "No Alt Text":
                 self.issues.append(f"⚠️ Image missing alt text: {img['src']}")
 
+    def check_sitemap(self):
+        """Check if sitemap is present."""
+        sitemap = self.seo_data.get("sitemap", "")
+        if not sitemap:
+            self.issues.append("Missing sitemap.")
+
+    def check_robots_txt(self):
+        """Check if robots.txt is present."""
+        robots_txt = self.seo_data.get("robots_txt", "")
+        if not robots_txt:
+            self.issues.append("Missing robots.txt file.")
+
+    def check_https(self):
+        """Check if the page is served over HTTPS."""
+        if not self.seo_data.get("url", "").startswith("https://"):
+            self.issues.append("Page is not served over HTTPS.")
+
     def analyze(self):
         """Run all SEO checks and return a list of issues."""
         self.check_meta_tags()
@@ -91,4 +108,7 @@ class SEORuleChecker:
         self.check_external_links()
         self.check_broken_links()
         self.check_image_optimization()
+        self.check_sitemap()
+        self.check_robots_txt()
+        self.check_https()
         return self.issues
