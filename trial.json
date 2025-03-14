@@ -1,0 +1,70 @@
+[
+  {
+    "url": "https://www.allanwanjiku.tech/",
+    "meta_title": "Allan Wanjiku| Software Developer",
+    "meta_description": "Allan Wanjiku | Software Engineer and Technical Writer with expertise in React, JavaScript, and building fullstack web applications. Passionate about creating innovative solutions and delivering technical content that simplifies complex topics.",
+    "canonical": "",
+    "meta_robots": "",
+    "h1_tags": [
+      [
+        "\n          Hi, my name is ",
+        "Allan Wanjiku",
+        "\n          ",
+        "\n          A Sotware Engineer & Technical Writer\n        "
+      ]
+    ],
+    "h2_tags": [["About Me", "Projects", "Contact"]],
+    "h3_tags": [
+      [
+        "\n                Buzzd - Artist and Song Recommendation App\n              ",
+        "\n                RentNest - Online Directory for House Agents\n              "
+      ]
+    ],
+    "h4_tags": [[""]],
+    "h5_tags": [[""]],
+    "h6_tags": [[""]],
+    "internal_links_count": 5,
+    "internal_links": [
+      "mailto:allan@allanwanjiku.tech",
+      "https://www.allanwanjiku.tech/#projects",
+      "https://www.allanwanjiku.tech/#hero",
+      "https://www.allanwanjiku.tech/#about",
+      "https://www.allanwanjiku.tech/"
+    ],
+    "external_links_count": 13,
+    "external_links": [
+      "mailto:allan@allanwanjiku.tech",
+      "#hero",
+      "#projects",
+      "https://youtu.be/umEs88JSAAo",
+      "https://twitter.com/allan_muchemi89",
+      "https://withallan.hashnode.dev/",
+      "https://github.com/samlan24",
+      "#",
+      "https://www.linkedin.com/in/allan-wanjiku/",
+      "https://front-end-repo-seven.vercel.app/",
+      "#about",
+      "https://github.com/samlan24/online-directory",
+      "https://github.com/samlan24/buzzd"
+    ],
+    "image_data": [
+      {
+        "src": "https://www.allanwanjiku.tech/assets/man-working-on-laptop.svg",
+        "alt": "Profile Image"
+      },
+      {
+        "src": "https://www.allanwanjiku.tech/assets/Screenshot_2024-09-25_18-19-42.png",
+        "alt": "Project Image"
+      },
+      {
+        "src": "https://www.allanwanjiku.tech/assets/rentnest.png",
+        "alt": "Project Image"
+      }
+    ],
+    "issues_detected": [
+      "⚠️ Meta description length should be between 50-160 characters.",
+      "❌ Missing canonical tag.",
+      "⚠️ No robots meta tag found."
+    ]
+  }
+]
