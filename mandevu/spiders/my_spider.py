@@ -103,6 +103,7 @@ class SEOAuditSpider(scrapy.Spider):
         rule_checker = SEORuleChecker(seo_data)
         issues = rule_checker.analyze()
         seo_data["issues_detected"] = issues
+        seo_data["Recommendations"] = get_recommendations(issues)
 
         self.results.append(seo_data)
 
