@@ -2,6 +2,7 @@ import scrapy
 import json
 from scrapy.linkextractors import LinkExtractor
 from mandevu.utils.seo_rules import SEORuleChecker
+from mandevu.utils.together_ai import get_recommendations
 import time
 
 class SEOAuditSpider(scrapy.Spider):
