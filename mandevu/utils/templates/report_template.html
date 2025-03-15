@@ -9,6 +9,7 @@
         font-family: Arial, sans-serif;
         margin: 20px;
         line-height: 1.6;
+        background-color: #f4f4f4;
       }
       h1, h2, h3 {
         color: #333;
@@ -74,6 +75,7 @@
         <li>
           <img src="{{ image.src }}" alt="{{ image.alt }}" width="100" />
           <p><strong>Alt Text:</strong> {{ image.alt if image.alt else "No Alt Text" }}</p>
+          <p><strong>Size:</strong>{{ image.size }}</p>
           <p><strong>Status:</strong> {{ image.status }}</p>
         </li>
         {% endfor %}
@@ -121,7 +123,7 @@
       <h2>Issues Detected:</h2>
       <ul>
         {% for issue in issues_detected %}
-        <li class="issue">⚠️ {{ issue }}</li>
+        <li class="issue">{{ issue }}</li>
         {% endfor %}
       </ul>
     </div>
