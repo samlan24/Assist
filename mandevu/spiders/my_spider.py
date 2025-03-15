@@ -6,6 +6,7 @@ from mandevu.utils.together_ai import get_recommendations
 import time
 import os
 import subprocess
+import requests
 
 class SEOAuditSpider(scrapy.Spider):
     name = "seo_audit"
@@ -45,15 +46,26 @@ class SEOAuditSpider(scrapy.Spider):
         h5_tags = [tag.strip() for tag in response.xpath("//h5//text()").getall()]
         h6_tags = [tag.strip() for tag in response.xpath("//h6//text()").getall()]
 
-        image_data = [
-            {
-                "src": response.urljoin(img),
-                "alt": response.xpath(f"//img[@src='{img}']/@alt").get(default="No Alt Text"),
-                "size": response.xpath(f"//img[@src='{img}']/@size").get(default=0),
-                "status": response.xpath(f"//img[@src='{img}']/@status").get(default=200)
-            }
-            for img in response.xpath("//img/@src").getall()
-        ]
+        image_data = []
+        for img in response.xpath("//img/@src").getall():
+            img_url = response.urljoin(img)
+            alt_text = response.xpath(f"//img[@src='{img}']/@alt").get(default="No Alt Text")
+            status = response.xpath(f"//img[@src='{img}']/@status").get(default=200)
+
+            # Get image size
+            try:
+                img_response = requests.get(img_url)
+                img_response.raise_for_status()
+                img_size = len(img_response.content)
+            except requests.RequestException:
+                img_size = 0
+
+            image_data.append({
+                "src": img_url,
+                "alt": alt_text,
+                "size": img_size,
+                "status": status
+            })
 
         # Extract additional elements
         structured_data = response.xpath("//script[@type='application/ld+json']/text()").getall()
@@ -71,7 +83,6 @@ class SEOAuditSpider(scrapy.Spider):
         }
         hreflang_tags = response.xpath("//link[@rel='alternate']/@hreflang").getall()
         viewport = response.xpath("//meta[@name='viewport']/@content").get(default="")
-
 
         start_time = time.time()
         response.follow(response.url)
@@ -113,7 +124,6 @@ class SEOAuditSpider(scrapy.Spider):
         for link in internal_links:
             if link not in self.visited_links:
                 yield response.follow(link, callback=self.parse)
-
 
     def close_spider(self, spider):
         """Runs the report generator after Scrapy finishes crawling."""

@@ -46,7 +46,7 @@ class SEORuleChecker:
         if not headings["h1"]:
             self.issues.append("No H1 tag found on the page. Each page should have one main H1 tag for SEO.")
         elif h1_count > 1:
-            self.issues.append(f"⚠️ Multiple H1 tags found ({h1_count}). Ensure only one main H1 for clarity.")
+            self.issues.append(f"Multiple H1 tags found ({h1_count}). Ensure only one main H1 for clarity.")
 
         heading_order = ["h1", "h2", "h3", "h4", "h5", "h6"]
         last_level = 0
@@ -61,13 +61,13 @@ class SEORuleChecker:
         """Ensure there are enough internal links."""
         internal_links_count = self.seo_data.get("internal_links_count", 0)
         if internal_links_count < 3:
-            self.issues.append("⚠️ Low internal linking. Consider adding more internal links.")
+            self.issues.append("Low internal linking. Consider adding more internal links.")
 
     def check_external_links(self):
         """Check if there are external links (optional)."""
         external_links_count = self.seo_data.get("external_links_count", 0)
         if external_links_count == 0:
-            self.issues.append("⚠️ No external links found. Consider linking to relevant sources.")
+            self.issues.append("No external links found. Consider linking to relevant sources.")
 
     def check_broken_links(self):
         """Check for broken internal links."""
@@ -76,22 +76,46 @@ class SEORuleChecker:
                 self.issues.append(f" Broken internal link found: {link}")
 
     def check_image_optimization(self):
-        """Check for missing alt text in images."""
+        """Check for missing, duplicate, or non-descriptive alt text in images."""
+        alt_texts = {}
+
         for img in self.seo_data.get("image_data", []):
-            if img.get("alt") == "No Alt Text":
-                self.issues.append(f"⚠️ Image missing alt text: {img['src']}")
+            alt_text = img.get("alt", "").strip()
+            img_src = img["src"]
+
+
+            if not alt_text or alt_text.lower() == "no alt text":
+                self.issues.append(f"Image missing alt text: {img_src}")
+                continue
+
+
+            generic_terms = {"image", "photo", "screenshot", "picture", "graphic"}
+            if alt_text.lower() in generic_terms or alt_text.endswith((".jpg", ".png", ".gif", ".webp")):
+                self.issues.append(f"Non-descriptive alt text: '{alt_text}' for {img_src}")
+
+
+            if alt_text in alt_texts:
+                alt_texts[alt_text].append(img_src)
+            else:
+                alt_texts[alt_text] = [img_src]
+
+
+        for alt_text, sources in alt_texts.items():
+            if len(sources) > 1:
+                self.issues.append(f"Duplicate alt text: '{alt_text}' used on {len(sources)} images.")
+                print(f"Duplicate alt text detected: '{alt_text}' used on {len(sources)} images.")  # Debug print statement
 
     def check_large_images(self):
         """Check for large image files."""
         for img in self.seo_data.get("image_data", []):
-            if img.get("size", 0) > 100000:  # Example threshold: 100KB
-                self.issues.append(f"⚠️ Large image file: {img['src']} ({img['size']} bytes)")
+            if img.get("size", 0) > 100000:
+                self.issues.append(f" Large image file: {img['src']} ({img['size']} bytes)")
 
     def check_broken_images(self):
         """Check for broken images (404s)."""
         for img in self.seo_data.get("image_data", []):
             if img.get("status", 200) == 404:
-                self.issues.append(f"⚠️ Broken image found: {img['src']}")
+                self.issues.append(f"Broken image found: {img['src']}")
 
     def check_sitemap(self):
         """Check if sitemap is present."""
@@ -156,7 +180,7 @@ class SEORuleChecker:
         """Check if the page load time is too high."""
         load_time = self.seo_data.get("load_time", 0)
         if load_time > 3:
-            self.issues.append(f"⚠️ Page load time is too high: {load_time:.2f} seconds.")
+            self.issues.append(f"Page load time is too high: {load_time:.2f} seconds.")
 
     def analyze(self):
         """Run all SEO checks and return a list of issues."""
