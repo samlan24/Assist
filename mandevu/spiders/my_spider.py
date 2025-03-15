@@ -15,6 +15,8 @@ class SEOAuditSpider(scrapy.Spider):
 
     handle_httpstatus_list = [404]
     visited_links = set()
+    all_pages = set()
+    linked_pages = set()
     results = []
 
     def parse(self, response):
@@ -22,6 +24,7 @@ class SEOAuditSpider(scrapy.Spider):
         if response.url in self.visited_links:
             return
         self.visited_links.add(response.url)
+        self.all_pages.add(response.url)
         self.crawler.stats.inc_value('pages_crawled', 1)
 
         all_links = set(response.css("a::attr(href)").getall())
@@ -33,6 +36,8 @@ class SEOAuditSpider(scrapy.Spider):
         }
 
         external_links = [link for link in all_links if not link.startswith("/") and not link.startswith(self.start_urls[0])]
+
+        self.linked_pages.update(internal_links)
 
         meta_title = response.xpath("normalize-space(//title/text())").get(default="No Title Tag")
         meta_description = response.xpath("normalize-space(//meta[@name='description']/@content)").get(default="No Description Available")
@@ -88,6 +93,8 @@ class SEOAuditSpider(scrapy.Spider):
         response.follow(response.url)
         load_time = time.time() - start_time
 
+        internal_links_status = self.check_links_status(internal_links)
+
         seo_data = {
             "url": response.url,
             "meta_title": meta_title,
@@ -101,7 +108,7 @@ class SEOAuditSpider(scrapy.Spider):
             "h5_tags": h5_tags,
             "h6_tags": h6_tags,
             "internal_links_count": len(internal_links),
-            "internal_links": list(internal_links),
+            "internal_links": internal_links_status,
             "external_links_count": len(external_links),
             "external_links": external_links,
             "image_data": image_data,
@@ -125,9 +132,25 @@ class SEOAuditSpider(scrapy.Spider):
             if link not in self.visited_links:
                 yield response.follow(link, callback=self.parse)
 
+    def check_links_status(self, links):
+        """Check the status of links and return a list with status codes."""
+        links_status = []
+        for link in links:
+            try:
+                response = requests.head(link, allow_redirects=True)
+                links_status.append({"url": link, "status": response.status_code})
+            except requests.RequestException as e:
+                links_status.append({"url": link, "status": "error", "error": str(e)})
+        return links_status
+
     def close_spider(self, spider):
         """Runs the report generator after Scrapy finishes crawling."""
         print("✅ Scrapy crawl complete. Generating SEO report...")
+
+        # Detect orphan pages
+        orphan_pages = self.all_pages - self.linked_pages
+        if orphan_pages:
+            print(f"Orphan pages detected: {orphan_pages}")
 
         script_dir = os.path.dirname(__file__)
         script_path = os.path.join(script_dir, "..", "utils", "generate_report.py")

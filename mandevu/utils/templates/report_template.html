@@ -52,21 +52,25 @@
     </div>
 
     <div class="section">
-      <h2>Links:</h2>
-      <p><strong>Internal Links ({{ internal_links_count }}):</strong></p>
-      <ul>
-        {% for link in internal_links %}
-        <li><a href="{{ link }}" target="_blank">{{ link }}</a></li>
-        {% endfor %}
-      </ul>
+      <div class="section">
+        <h2>Links:</h2>
+        <p><strong>Internal Links ({{ internal_links_count }}):</strong></p>
+        <ul>
+          {% for link in internal_links %}
+          <li>
+            <a href="{{ link.url }}" target="_blank">{{ link.url }}</a>
+            <p>Status: {{ link.status }}</p>
+          </li>
+          {% endfor %}
+        </ul>
 
-      <p><strong>External Links ({{ external_links_count }}):</strong></p>
-      <ul>
-        {% for link in external_links %}
-        <li><a href="{{ link }}" target="_blank">{{ link }}</a></li>
-        {% endfor %}
-      </ul>
-    </div>
+        <p><strong>External Links ({{ external_links_count }}):</strong></p>
+        <ul>
+          {% for link in external_links %}
+          <li><a href="{{ link }}" target="_blank">{{ link }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
 
     <div class="section">
       <h2>Images:</h2>

@@ -15,7 +15,7 @@ class SEORuleChecker:
         if not description or description == "No Description Available":
             self.issues.append("Missing meta description.")
         elif len(description) < 50 or len(description) > 160:
-            self.issues.append("⚠️ Meta description length should be between 50-160 characters.")
+            self.issues.append(f"Meta description length ({len(description)} characters) should be between 50-160 characters.")
 
     def check_canonical_tag(self):
         """Check if the canonical tag is missing."""
@@ -56,6 +56,7 @@ class SEORuleChecker:
                 if last_level and int(level[1]) > last_level + 1:
                     self.issues.append(f"⚠️ Heading structure issue: Found {level} without an H{last_level} above it.")
                 last_level = int(level[1]) if headings[level] else last_level
+
 
     def check_internal_links(self):
         """Ensure there are enough internal links."""
