@@ -118,22 +118,36 @@ class SEORuleChecker:
             if img.get("status", 200) == 404:
                 self.issues.append(f"Broken image found: {img['src']}")
 
-    def check_sitemap(self):
-        """Check if sitemap is present."""
-        sitemap = self.seo_data.get("sitemap", "")
-        if not sitemap:
-            self.issues.append("Missing sitemap.")
-
-    def check_robots_txt(self):
-        """Check if robots.txt is present."""
-        robots_txt = self.seo_data.get("robots_txt", "")
-        if not robots_txt:
-            self.issues.append("Missing robots.txt file.")
-
     def check_https(self):
         """Check if the page is served over HTTPS."""
         if not self.seo_data.get("url", "").startswith("https://"):
             self.issues.append("Page is not served over HTTPS.")
+
+    def check_sitemap(self):
+        """Check if a sitemap exists and is referenced in robots.txt."""
+        sitemap_url = self.seo_data.get("sitemap_url", "")
+        robots_txt = self.seo_data.get("robots_txt", "")
+
+        if not sitemap_url:
+            self.issues.append("❌ No sitemap.xml detected. A sitemap helps search engines crawl your site efficiently.")
+
+        if sitemap_url and "Sitemap:" not in robots_txt:
+            self.issues.append("⚠️ Sitemap.xml is missing from robots.txt. Consider adding it for better indexing.")
+
+
+    def check_robots_txt(self):
+        """Check if robots.txt exists and has proper directives."""
+        robots_txt = self.seo_data.get("robots_txt", "")
+
+        if not robots_txt:
+            self.issues.append("❌ No robots.txt file found. This file helps control how search engines crawl your site.")
+
+        if "User-agent: *" not in robots_txt:
+            self.issues.append("⚠️ robots.txt is missing a default User-agent directive.")
+
+        if "Disallow: /" in robots_txt:
+            self.issues.append("⚠️ robots.txt is blocking all search engines from crawling the site. Review your settings.")
+
 
     def check_structured_data(self):
         """Check for the presence of structured data."""

@@ -10,14 +10,64 @@ import requests
 
 class SEOAuditSpider(scrapy.Spider):
     name = "seo_audit"
-    allowed_domains = ["allanwanjiku.tech"]
-    start_urls = ["https://allanwanjiku.tech/"]
+    allowed_domains = ["gumascargo.com"]
+    start_urls = ["https://gumascargo.com/"]
 
     handle_httpstatus_list = [404]
     visited_links = set()
     all_pages = set()
     linked_pages = set()
     results = []
+    seo_data = {"robots_txt": None, "sitemap": None}
+
+    def start_requests(self):
+        """Start by requesting robots.txt and sitemap.xml, then proceed to crawl the website."""
+        # Request robots.txt
+        yield scrapy.Request(
+            url=f"{self.start_urls[0]}robots.txt",
+            callback=self.parse_robots,
+            errback=self.handle_missing_robots,
+            dont_filter=True,
+        )
+        # Request sitemap.xml
+        yield scrapy.Request(
+            url=f"{self.start_urls[0]}sitemap.xml",
+            callback=self.parse_sitemap,
+            errback=self.handle_missing_sitemap,
+            dont_filter=True,
+        )
+        # Begin crawling the website
+        yield scrapy.Request(
+            url=self.start_urls[0], callback=self.parse, dont_filter=True
+        )
+
+    def parse_robots(self, response):
+        """Parse robots.txt file."""
+        if response.status == 200:
+            self.seo_data["robots_txt"] = response.text
+            self.logger.info("✅ Robots.txt file found and processed.")
+        else:
+            self.seo_data["robots_txt"] = "Missing"
+            self.logger.warning("⚠️ Robots.txt file not found.")
+
+    def handle_missing_robots(self, failure):
+        """Handle missing robots.txt gracefully."""
+        self.seo_data["robots_txt"] = "Missing"
+        self.logger.warning("⚠️ Robots.txt file not found (handled gracefully).")
+
+    def parse_sitemap(self, response):
+        """Parse sitemap.xml file."""
+        if response.status == 200:
+            self.seo_data["sitemap"] = response.text
+            self.logger.info("✅ Sitemap.xml file found and processed.")
+        else:
+            self.seo_data["sitemap"] = "Missing"
+            self.logger.warning("⚠️ Sitemap.xml file not found.")
+
+    def handle_missing_sitemap(self, failure):
+        """Handle missing sitemap.xml gracefully."""
+        self.seo_data["sitemap"] = "Missing"
+        self.logger.warning("⚠️ Sitemap.xml file not found (handled gracefully).")
 
     def parse(self, response):
         """Extracts SEO data and follows internal links."""
@@ -57,7 +107,7 @@ class SEOAuditSpider(scrapy.Spider):
             alt_text = response.xpath(f"//img[@src='{img}']/@alt").get(default="No Alt Text")
             status = response.xpath(f"//img[@src='{img}']/@status").get(default=200)
 
-            # Get image size
+
             try:
                 img_response = requests.get(img_url)
                 img_response.raise_for_status()
@@ -72,7 +122,7 @@ class SEOAuditSpider(scrapy.Spider):
                 "status": status
             })
 
-        # Extract additional elements
+
         structured_data = response.xpath("//script[@type='application/ld+json']/text()").getall()
         open_graph_data = {
             "og:title": response.xpath("//meta[@property='og:title']/@content").get(default=""),
@@ -118,6 +168,9 @@ class SEOAuditSpider(scrapy.Spider):
             "hreflang_tags": hreflang_tags,
             "viewport": viewport,
             "load_time": load_time,
+            "robots_txt": self.seo_data.get("robots_txt", "Unknown"),
+            "sitemap": self.seo_data.get("sitemap", "Unknown"),
+
         }
 
         rule_checker = SEORuleChecker(seo_data)
@@ -130,7 +183,7 @@ class SEOAuditSpider(scrapy.Spider):
         yield seo_data
         for link in internal_links:
             if link not in self.visited_links:
-                yield response.follow(link, callback=self.parse)
+                yield scrapy.Request(link, callback=self.parse)
 
     def check_links_status(self, links):
         """Check the status of links and return a list with status codes."""
@@ -147,7 +200,6 @@ class SEOAuditSpider(scrapy.Spider):
         """Runs the report generator after Scrapy finishes crawling."""
         print("✅ Scrapy crawl complete. Generating SEO report...")
 
-        # Detect orphan pages
         orphan_pages = self.all_pages - self.linked_pages
         if orphan_pages:
             print(f"Orphan pages detected: {orphan_pages}")
