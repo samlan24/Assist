@@ -3,55 +3,112 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap"
+      rel="stylesheet"
+    />
     <title>SEO Audit Report</title>
     <style>
       body {
-        font-family: Arial, sans-serif;
+        font-family: Quicksand, sans-serif;
         margin: 20px;
         line-height: 1.6;
         background-color: #f4f4f4;
       }
-      h1, h2, h3 {
+
+      .container {
+        padding: 4rem;
+      }
+      ul {
+        list-style-type: none;
+        padding: 0;
+      }
+      a {
         color: #333;
+        text-decoration: none;
+      }
+      strong {
+        color: #f7956d;
+      }
+      h1,
+      h2,
+      h3 {
+        color: #002855;
+        font-weight: 700;
       }
       .section {
         margin-bottom: 20px;
       }
-      .recommendations, .issues {
+
+      .recommendations,
+      .issues {
         margin-top: 10px;
       }
-      .recommendation, .issue {
-        background-color: #f4f4f4;
-        padding: 10px;
+      .recommendation,
+      .issue {
+        padding: 5px;
         border-radius: 5px;
-        margin-bottom: 10px;
+        margin-bottom: 5px;
+      }
+      .recommendations {
+        background-color: #cfe3ff;
       }
     </style>
   </head>
   <body>
-    <h1>SEO Audit Report for {{ url }}</h1>
-    <div class="section">
-      <h2>Meta Information:</h2>
-      <p><strong>Meta Title:</strong> {{ meta_title }}</p>
-      <p><strong>Meta Description:</strong> {{ meta_description }}</p>
-      <p><strong>Canonical Tag:</strong> {{ canonical if canonical else "Not Found" }}</p>
-      <p><strong>Meta Robots:</strong> {{ meta_robots if meta_robots else "Not Found" }}</p>
-    </div>
+    <div class="container">
+      <h1>SEO Audit Report for {{ url }}</h1>
+      <div class="section meta">
+        <h2>Meta Information:</h2>
+        <p><strong>Meta Title:</strong> {{ meta_title }}</p>
+        <p><strong>Meta Description:</strong> {{ meta_description }}</p>
+        <p>
+          <strong>Canonical Tag:</strong> {{ canonical if canonical else "Not
+          Found" }}
+        </p>
+        <p>
+          <strong>Meta Robots:</strong> {{ meta_robots if meta_robots else "Not
+          Found" }}
+        </p>
+      </div>
 
-    <div class="section">
-      <h2>Headings:</h2>
-      <ul>
-        <li><strong>H1:</strong> {% for tag in h1_tags %} <p>{{ tag }}</p> {% endfor %}</li>
-        <li><strong>H2:</strong> {% for tag in h2_tags %} <p>{{ tag }}</p> {% endfor %}</li>
-        <li><strong>H3:</strong> {% for tag in h3_tags %} <p>{{ tag }}</p> {% endfor %}</li>
-        <li><strong>H4:</strong> {% for tag in h4_tags %} <p>{{ tag }}</p> {% endfor %}</li>
-        <li><strong>H5:</strong> {% for tag in h5_tags %} <p>{{ tag }}</p> {% endfor %}</li>
-        <li><strong>H6:</strong> {% for tag in h6_tags %} <p>{{ tag }}</p> {% endfor %}</li>
-      </ul>
-    </div>
+      <div class="section headings">
+        <h2>Headings:</h2>
+        <ul>
+          <li>
+            <strong>H1:</strong> {% for tag in h1_tags %}
+            <p>{{ tag }}</p>
+            {% endfor %}
+          </li>
+          <li>
+            <strong>H2:</strong> {% for tag in h2_tags %}
+            <p>{{ tag }}</p>
+            {% endfor %}
+          </li>
+          <li>
+            <strong>H3:</strong> {% for tag in h3_tags %}
+            <p>{{ tag }}</p>
+            {% endfor %}
+          </li>
+          <li>
+            <strong>H4:</strong> {% for tag in h4_tags %}
+            <p>{{ tag }}</p>
+            {% endfor %}
+          </li>
+          <li>
+            <strong>H5:</strong> {% for tag in h5_tags %}
+            <p>{{ tag }}</p>
+            {% endfor %}
+          </li>
+          <li>
+            <strong>H6:</strong> {% for tag in h6_tags %}
+            <p>{{ tag }}</p>
+            {% endfor %}
+          </li>
+        </ul>
+      </div>
 
-    <div class="section">
-      <div class="section">
+      <div class="section links">
         <h2>Links:</h2>
         <p><strong>Internal Links ({{ internal_links_count }}):</strong></p>
         <ul>
@@ -71,78 +128,80 @@
         </ul>
       </div>
 
-    <div class="section">
-      <h2>Images:</h2>
-      <ul>
-        {% for image in image_data %}
-        <li>
-          <img src="{{ image.src }}" alt="{{ image.alt }}" width="100" />
-          <p><strong>Alt Text:</strong> {{ image.alt if image.alt else "No Alt Text" }}</p>
-          <p><strong>Size:</strong>{{ image.size }}</p>
-          <p><strong>Status:</strong> {{ image.status }}</p>
-        </li>
-        {% endfor %}
-      </ul>
-    </div>
+      <div class="section images">
+        <h2>Images:</h2>
+        <ul class="images_list">
+          {% for image in image_data %}
+          <li>
+            <img src="{{ image.src }}" alt="{{ image.alt }}" width="100" />
+            <p>
+              <strong>Alt Text:</strong> {{ image.alt if image.alt else "No Alt
+              Text" }}
+            </p>
+            <p><strong>Size:</strong>{{ image.size }}</p>
+            <p><strong>Status:</strong> {{ image.status }}</p>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
 
-    <div class="section">
-      <h2>Structured Data:</h2>
-      {% if structured_data %}
+      <div class="section">
+        <h2>Structured Data:</h2>
+        {% if structured_data %}
         <pre>{{ structured_data | tojson(indent=2) }}</pre>
-      {% else %}
+        {% else %}
         <p>No structured data found.</p>
-      {% endif %}
-    </div>
+        {% endif %}
+      </div>
 
-    <div class="section">
-      <h2>Open Graph Data:</h2>
-      <ul>
-        {% for key, value in open_graph_data.items() %}
-        <li><strong>{{ key }}:</strong> {{ value }}</li>
-        {% endfor %}
-      </ul>
-    </div>
+      <div class="section">
+        <h2>Open Graph Data:</h2>
+        <ul>
+          {% for key, value in open_graph_data.items() %}
+          <li><strong>{{ key }}:</strong> {{ value }}</li>
+          {% endfor %}
+        </ul>
+      </div>
 
-    <div class="section">
-      <h2>Twitter Card Data:</h2>
-      <ul>
-        {% for key, value in twitter_card_data.items() %}
-        <li><strong>{{ key }}:</strong> {{ value }}</li>
-        {% endfor %}
-      </ul>
-    </div>
+      <div class="section">
+        <h2>Twitter Card Data:</h2>
+        <ul>
+          {% for key, value in twitter_card_data.items() %}
+          <li><strong>{{ key }}:</strong> {{ value }}</li>
+          {% endfor %}
+        </ul>
+      </div>
 
-    <div class="section">
-      <h2>Viewport:</h2>
-      <p>{{ viewport }}</p>
-    </div>
+      <div class="section">
+        <h2>Viewport:</h2>
+        <p>{{ viewport }}</p>
+      </div>
 
-    <div class="section">
-      <h2>Load Time:</h2>
-      <p>{{ load_time }} seconds</p>
-    </div>
+      <div class="section">
+        <h2>Load Time:</h2>
+        <p>{{ load_time }} seconds</p>
+      </div>
 
-    <div class="section issues">
-      <h2>Issues Detected:</h2>
-      <ul>
-        {% for issue in issues_detected %}
-        <li class="issue">{{ issue }}</li>
-        {% endfor %}
-      </ul>
-    </div>
+      <div class="section issues">
+        <h2>Issues Detected:</h2>
+        <ul>
+          {% for issue in issues_detected %}
+          <li class="issue">{{ issue }}</li>
+          {% endfor %}
+        </ul>
+      </div>
 
-    <div class="section recommendations">
-      <h2>AI Recommendations:</h2>
-      {% if ai_recommendations %}
-        {% for recommendation in ai_recommendations %}
+      <div class="section recommendations">
+        <h2>AI Recommendations:</h2>
+        {% if ai_recommendations %} {% for recommendation in ai_recommendations
+        %}
         <div class="recommendation">
           <p>{{ recommendation }}</p>
         </div>
-        {% endfor %}
-      {% else %}
+        {% endfor %} {% else %}
         <p>No AI recommendations found.</p>
-      {% endif %}
+        {% endif %}
+      </div>
     </div>
-
   </body>
 </html>
