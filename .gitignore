@@ -126,3 +126,4 @@ cython_debug/
 trial.json
 SEO_Audit_Report.html
 SEO_Audit_Report.pdf
+results/

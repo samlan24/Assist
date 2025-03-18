@@ -10,8 +10,8 @@ import requests
 
 class SEOAuditSpider(scrapy.Spider):
     name = "seo_audit"
-    allowed_domains = ["gumascargo.com"]
-    start_urls = ["https://gumascargo.com/"]
+    allowed_domains = ["allanwanjiku.tech"]
+    start_urls = ["https://www.allanwanjiku.tech/"]
 
     handle_httpstatus_list = [404]
     visited_links = set()
