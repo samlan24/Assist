@@ -11,7 +11,7 @@ import requests
 class SEOAuditSpider(scrapy.Spider):
     name = "seo_audit"
     allowed_domains = ["allanwanjiku.tech"]
-    start_urls = ["https://www.allanwanjiku.tech/"]
+    start_urls = ["https://allanwanjiku.tech/"]
 
     handle_httpstatus_list = [404]
     visited_links = set()
