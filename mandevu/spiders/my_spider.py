@@ -85,7 +85,17 @@ class SEOAuditSpider(scrapy.Spider):
             if (link.startswith("/") or link.startswith(self.start_urls[0]) or not link.startswith("http")) and not link.startswith("mailto:")
         }
 
-        external_links = [link for link in all_links if not link.startswith("/") and not link.startswith(self.start_urls[0])]
+        external_links = [
+            link for link in all_links
+            if not link.startswith("/")
+            and not link.startswith(self.start_urls[0])
+            and not link.startswith("#")
+            and not link.startswith("mailto:")
+            and not link.startswith("tel:")
+            and link.strip()
+            and (link.startswith("http://") or link.startswith("https://"))
+        ]
+
 
         self.linked_pages.update(internal_links)
 
@@ -101,26 +111,32 @@ class SEOAuditSpider(scrapy.Spider):
         h5_tags = [tag.strip() for tag in response.xpath("//h5//text()").getall()]
         h6_tags = [tag.strip() for tag in response.xpath("//h6//text()").getall()]
 
+
+
         image_data = []
         for img in response.xpath("//img/@src").getall():
             img_url = response.urljoin(img)
             alt_text = response.xpath(f"//img[@src='{img}']/@alt").get(default="No Alt Text")
             status = response.xpath(f"//img[@src='{img}']/@status").get(default=200)
 
-
             try:
                 img_response = requests.get(img_url)
                 img_response.raise_for_status()
                 img_size = len(img_response.content)
+                img_type = img_response.headers.get("Content-Type", "unknown").split("/")[-1]  # Extract file type
+
             except requests.RequestException:
                 img_size = 0
+                img_type = "unknown"
 
             image_data.append({
                 "src": img_url,
                 "alt": alt_text,
                 "size": img_size,
-                "status": status
+                "status": status,
+                "type": img_type  # Add image type
             })
+
 
 
         structured_data = response.xpath("//script[@type='application/ld+json']/text()").getall()
