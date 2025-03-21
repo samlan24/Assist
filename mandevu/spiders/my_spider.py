@@ -3,6 +3,7 @@ import json
 from scrapy.linkextractors import LinkExtractor
 from mandevu.utils.seo_rules import SEORuleChecker
 from mandevu.utils.together_ai import get_recommendations
+from mandevu.utils.lighthouse_runner import run_lighthouse
 import time
 import os
 import subprocess
