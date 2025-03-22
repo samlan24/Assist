@@ -1,3 +1,4 @@
+
 class SEORuleChecker:
     def __init__(self, seo_data):
         self.seo_data = seo_data
@@ -122,6 +123,7 @@ class SEORuleChecker:
         """Check if the page is served over HTTPS."""
         if not self.seo_data.get("url", "").startswith("https://"):
             self.issues.append("Page is not served over HTTPS.")
+
 
     def check_sitemap(self):
         """Check if a sitemap exists and is referenced in robots.txt."""

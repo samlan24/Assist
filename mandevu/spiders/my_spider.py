@@ -3,11 +3,13 @@ import json
 from scrapy.linkextractors import LinkExtractor
 from mandevu.utils.seo_rules import SEORuleChecker
 from mandevu.utils.together_ai import get_recommendations
-from mandevu.utils.lighthouse_runner import run_lighthouse
 import time
 import os
 import subprocess
 import requests
+import ssl
+import socket
+from datetime import datetime
 
 class SEOAuditSpider(scrapy.Spider):
     name = "seo_audit"
@@ -21,8 +23,131 @@ class SEOAuditSpider(scrapy.Spider):
     results = []
     seo_data = {"robots_txt": None, "sitemap": None}
 
+    def check_ssl_cert(self, url):
+        """Check SSL certificate validity."""
+        hostname = url.replace("https://", "").replace("http://", "").split("/")[0]
+
+        try:
+            ctx = ssl.create_default_context()
+            with socket.create_connection((hostname, 443)) as sock:
+                with ctx.wrap_socket(sock, server_hostname=hostname) as ssock:
+                    cert = ssock.getpeercert()
+
+                    # Extract certificate details
+                    subject = dict(x[0] for x in cert["subject"])
+                    issuer = dict(x[0] for x in cert["issuer"])
+                    valid_until = cert["notAfter"]
+
+                    # Check if certificate is expired
+                    expiration_date = datetime.strptime(valid_until, "%b %d %H:%M:%S %Y %Z")
+                    if datetime.now() > expiration_date:
+                        return {"error": "Certificate is expired."}
+
+                    return {
+                        "subject": subject,
+                        "issuer": issuer,
+                        "valid_until": valid_until,
+                        "is_valid": True
+                    }
+        except ssl.SSLError as e:
+            return {"error": f"SSL error: {str(e)}"}
+        except Exception as e:
+            return {"error": str(e)}
+
+    def check_security_headers(self, url):
+        """Fetch and filter common security headers."""
+        try:
+            response = requests.get(url, timeout=10)  # Added timeout
+            response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
+
+            headers = response.headers
+            # List of common security headers to check
+            common_security_headers = [
+                "Content-Security-Policy",
+                "Strict-Transport-Security",
+                "X-Frame-Options",
+                "X-Content-Type-Options",
+                "Referrer-Policy",
+                "Permissions-Policy",
+                "X-XSS-Protection",
+                "Expect-CT",
+                "Feature-Policy",  # Deprecated but still used in some cases
+            ]
+
+            # Filter headers to include only common security headers
+            security_headers = {
+                header: headers.get(header, "Not Set")
+                for header in common_security_headers
+            }
+
+            return security_headers
+
+        except requests.exceptions.RequestException as e:
+            return {"error": f"Request error: {str(e)}"}
+        except Exception as e:
+            return {"error": str(e)}
+
+    def check_securityheaders_io(self, url):
+        """Check security headers using SecurityHeaders.io."""
+        api_url = f"https://securityheaders.com/?q={url}&followRedirects=on"
+        return f"Check security headers report: {api_url}"
+
+    def extract_ssl_issues(self, ssl_result):
+        """Extract issues from SSL certificate check."""
+        issues = []
+        if "error" in ssl_result:
+            issues.append(f"SSL Certificate Error: {ssl_result['error']}")
+        elif not ssl_result.get("is_valid", False):
+            issues.append("SSL Certificate is invalid or expired.")
+        return issues
+
+    def extract_security_header_issues(self, security_headers):
+        """Extract issues from security headers check."""
+        issues = []
+        required_headers = {
+            "Content-Security-Policy": "Consider adding a Content-Security-Policy to prevent XSS attacks.",
+            "Strict-Transport-Security": "Consider adding Strict-Transport-Security to enforce HTTPS.",
+            "X-Frame-Options": "Consider adding X-Frame-Options to prevent clickjacking.",
+            "X-Content-Type-Options": "Consider adding X-Content-Type-Options to prevent MIME type sniffing.",
+            "Referrer-Policy": "Consider adding Referrer-Policy to control referrer information.",
+            "Permissions-Policy": "Consider adding Permissions-Policy to restrict browser features.",
+        }
+
+        for header, recommendation in required_headers.items():
+            if security_headers.get(header, "Not Set") == "Not Set":
+                issues.append(f"Missing Security Header: {header}. {recommendation}")
+
+        return issues
+
     def start_requests(self):
-        """Start by requesting robots.txt and sitemap.xml, then proceed to crawl the website."""
+        """Start by checking SSL certificate and security headers, then proceed to crawl the website."""
+        # Check SSL certificate for the root URL
+        ssl_result = self.check_ssl_cert(self.start_urls[0])
+        self.seo_data["ssl_cert"] = ssl_result
+
+        # Log SSL certificate status
+        if ssl_result.get("is_valid"):
+            self.logger.info("✅ SSL certificate is valid.")
+        else:
+            self.logger.warning(f"⚠️ SSL certificate issue: {ssl_result.get('error')}")
+
+        # Check security headers for the root URL
+        security_headers = self.check_security_headers(self.start_urls[0])
+        self.seo_data["security_headers"] = security_headers
+
+        # Log security headers status
+        if "error" in security_headers:
+            self.logger.warning(f"⚠️ Security headers check failed: {security_headers['error']}")
+        else:
+            self.logger.info(f"✅ Security headers found: {list(security_headers.keys())}")
+
+        # Generate SecurityHeaders.io report
+        securityheaders_io_report = self.check_securityheaders_io(self.start_urls[0])
+        self.seo_data["securityheaders_io_report"] = securityheaders_io_report
+
+        # Log SecurityHeaders.io report
+        self.logger.info(f"✅ SecurityHeaders.io report: {securityheaders_io_report}")
+
         # Request robots.txt
         yield scrapy.Request(
             url=f"{self.start_urls[0]}robots.txt",
@@ -97,7 +222,6 @@ class SEOAuditSpider(scrapy.Spider):
             and (link.startswith("http://") or link.startswith("https://"))
         ]
 
-
         self.linked_pages.update(internal_links)
 
         meta_title = response.xpath("normalize-space(//title/text())").get(default="No Title Tag")
@@ -111,8 +235,6 @@ class SEOAuditSpider(scrapy.Spider):
         h4_tags = [tag.strip() for tag in response.xpath("//h4//text()").getall()]
         h5_tags = [tag.strip() for tag in response.xpath("//h5//text()").getall()]
         h6_tags = [tag.strip() for tag in response.xpath("//h6//text()").getall()]
-
-
 
         image_data = []
         for img in response.xpath("//img/@src").getall():
@@ -135,10 +257,8 @@ class SEOAuditSpider(scrapy.Spider):
                 "alt": alt_text,
                 "size": img_size,
                 "status": status,
-                "type": img_type  # Add image type
+                "type": img_type
             })
-
-
 
         structured_data = response.xpath("//script[@type='application/ld+json']/text()").getall()
         open_graph_data = {
@@ -187,13 +307,23 @@ class SEOAuditSpider(scrapy.Spider):
             "load_time": load_time,
             "robots_txt": self.seo_data.get("robots_txt", "Unknown"),
             "sitemap": self.seo_data.get("sitemap", "Unknown"),
-
+            "ssl_cert": self.seo_data.get("ssl_cert", "Unknown"),
+            "security_headers": self.seo_data.get("security_headers", "Unknown"),
+            "securityheaders_io_report": self.seo_data.get("securityheaders_io_report", "Unknown"),
         }
 
+        # Extract issues from SSL certificate and security headers
+        ssl_issues = self.extract_ssl_issues(self.seo_data.get("ssl_cert", {}))
+        security_header_issues = self.extract_security_header_issues(self.seo_data.get("security_headers", {}))
+
+        # Combine all issues
         rule_checker = SEORuleChecker(seo_data)
-        issues = rule_checker.analyze()
-        seo_data["issues_detected"] = issues
-        seo_data["ai_recommendations"] = get_recommendations(issues)
+        seo_issues = rule_checker.analyze()
+        all_issues = ssl_issues + security_header_issues + seo_issues
+
+        # Generate AI recommendations
+        seo_data["issues_detected"] = all_issues
+        seo_data["ai_recommendations"] = get_recommendations(all_issues)
 
         self.results.append(seo_data)
 
