@@ -194,6 +194,31 @@
         <p>{{ load_time }} seconds</p>
       </div>
 
+      <div class="security">
+        <h2>Security:</h2>
+        <h3>SSL Certificate:</h3>
+        <ul>
+          <li>
+            <strong>Common Name:</strong> {{ ssl_cert.subject.commonName }}
+          </li>
+          <li>
+            <strong>Issuer:</strong> {{ ssl_cert.issuer.organizationName }}
+          </li>
+          <li><strong>Valid Until:</strong> {{ ssl_cert.valid_until }}</li>
+          <li>
+            <strong>Status:</strong> {{ "Valid" if ssl_cert.is_valid else
+            "Invalid" }}
+          </li>
+        </ul>
+
+        <h3>Security Headers:</h3>
+        <ul>
+          {% for header, value in security_headers.items() %}
+          <li><strong>{{ header }}:</strong> {{ value }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+
       <div class="section issues">
         <h2>Issues Detected:</h2>
         <ul>

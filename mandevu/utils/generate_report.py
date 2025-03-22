@@ -67,6 +67,8 @@ for index, entry in enumerate(data, start=1):
         "hreflang_tags": entry.get("hreflang_tags", []),
         "viewport": entry.get("viewport", ""),
         "load_time": entry.get("load_time", 0),
+        "ssl_cert":entry.get("ssl_cert", "Unknown"),
+        "security_headers": entry.get("security_headers", "Unknown"),
         "issues_detected": entry.get("issues_detected", []),
         "ai_recommendations": entry.get("ai_recommendations", {}).get("ai_recommendations", []),
     }
