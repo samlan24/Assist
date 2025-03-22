@@ -12,6 +12,16 @@ BOT_NAME = "mandevu"
 SPIDER_MODULES = ["mandevu.spiders"]
 NEWSPIDER_MODULE = "mandevu.spiders"
 
+FEEDS = {
+    "trial.json": {
+        "format": "json",
+        "encoding": "utf8",
+        "indent": 4,
+        "overwrite": True,
+    },
+}
+
+
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = "mandevu (+http://www.yourdomain.com)"
