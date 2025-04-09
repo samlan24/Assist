@@ -32,7 +32,7 @@ results_dir = os.path.join(os.path.dirname(json_file), "results")
 os.makedirs(results_dir, exist_ok=True)
 
 for index, entry in enumerate(data, start=1):
-    print(f"📄 Processing Entry {index}/{len(data)}...")
+    print(f"Processing Entry {index}/{len(data)}...")
 
     url = entry.get("url", "N/A")
 

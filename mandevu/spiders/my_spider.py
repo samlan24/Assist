@@ -33,12 +33,12 @@ class SEOAuditSpider(scrapy.Spider):
                 with ctx.wrap_socket(sock, server_hostname=hostname) as ssock:
                     cert = ssock.getpeercert()
 
-                    # Extract certificate details
+
                     subject = dict(x[0] for x in cert["subject"])
                     issuer = dict(x[0] for x in cert["issuer"])
                     valid_until = cert["notAfter"]
 
-                    # Check if certificate is expired
+
                     expiration_date = datetime.strptime(valid_until, "%b %d %H:%M:%S %Y %Z")
                     if datetime.now() > expiration_date:
                         return {"error": "Certificate is expired."}
@@ -57,11 +57,10 @@ class SEOAuditSpider(scrapy.Spider):
     def check_security_headers(self, url):
         """Fetch and filter common security headers."""
         try:
-            response = requests.get(url, timeout=10)  # Added timeout
-            response.raise_for_status()  # Raise HTTPError for bad responses (4xx or 5xx)
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
 
             headers = response.headers
-            # List of common security headers to check
             common_security_headers = [
                 "Content-Security-Policy",
                 "Strict-Transport-Security",
@@ -71,10 +70,10 @@ class SEOAuditSpider(scrapy.Spider):
                 "Permissions-Policy",
                 "X-XSS-Protection",
                 "Expect-CT",
-                "Feature-Policy",  # Deprecated but still used in some cases
+                "Feature-Policy",
             ]
 
-            # Filter headers to include only common security headers
+
             security_headers = {
                 header: headers.get(header, "Not Set")
                 for header in common_security_headers
@@ -121,48 +120,48 @@ class SEOAuditSpider(scrapy.Spider):
 
     def start_requests(self):
         """Start by checking SSL certificate and security headers, then proceed to crawl the website."""
-        # Check SSL certificate for the root URL
+
         ssl_result = self.check_ssl_cert(self.start_urls[0])
         self.seo_data["ssl_cert"] = ssl_result
 
-        # Log SSL certificate status
-        if ssl_result.get("is_valid"):
-            self.logger.info("✅ SSL certificate is valid.")
-        else:
-            self.logger.warning(f"⚠️ SSL certificate issue: {ssl_result.get('error')}")
 
-        # Check security headers for the root URL
+        if ssl_result.get("is_valid"):
+            self.logger.info("SSL certificate is valid.")
+        else:
+            self.logger.warning(f"SSL certificate issue: {ssl_result.get('error')}")
+
+
         security_headers = self.check_security_headers(self.start_urls[0])
         self.seo_data["security_headers"] = security_headers
 
-        # Log security headers status
-        if "error" in security_headers:
-            self.logger.warning(f"⚠️ Security headers check failed: {security_headers['error']}")
-        else:
-            self.logger.info(f"✅ Security headers found: {list(security_headers.keys())}")
 
-        # Generate SecurityHeaders.io report
+        if "error" in security_headers:
+            self.logger.warning(f"Security headers check failed: {security_headers['error']}")
+        else:
+            self.logger.info(f"Security headers found: {list(security_headers.keys())}")
+
+
         securityheaders_io_report = self.check_securityheaders_io(self.start_urls[0])
         self.seo_data["securityheaders_io_report"] = securityheaders_io_report
 
-        # Log SecurityHeaders.io report
-        self.logger.info(f"✅ SecurityHeaders.io report: {securityheaders_io_report}")
 
-        # Request robots.txt
+        self.logger.info(f"SecurityHeaders.io report: {securityheaders_io_report}")
+
+
         yield scrapy.Request(
             url=f"{self.start_urls[0]}robots.txt",
             callback=self.parse_robots,
             errback=self.handle_missing_robots,
             dont_filter=True,
         )
-        # Request sitemap.xml
+
         yield scrapy.Request(
             url=f"{self.start_urls[0]}sitemap.xml",
             callback=self.parse_sitemap,
             errback=self.handle_missing_sitemap,
             dont_filter=True,
         )
-        # Begin crawling the website
+
         yield scrapy.Request(
             url=self.start_urls[0], callback=self.parse, dont_filter=True
         )
@@ -171,29 +170,29 @@ class SEOAuditSpider(scrapy.Spider):
         """Parse robots.txt file."""
         if response.status == 200:
             self.seo_data["robots_txt"] = response.text
-            self.logger.info("✅ Robots.txt file found and processed.")
+            self.logger.info("Robots.txt file found and processed.")
         else:
             self.seo_data["robots_txt"] = "Missing"
-            self.logger.warning("⚠️ Robots.txt file not found.")
+            self.logger.warning("Robots.txt file not found.")
 
     def handle_missing_robots(self, failure):
         """Handle missing robots.txt gracefully."""
         self.seo_data["robots_txt"] = "Missing"
-        self.logger.warning("⚠️ Robots.txt file not found (handled gracefully).")
+        self.logger.warning("Robots.txt file not found (handled gracefully).")
 
     def parse_sitemap(self, response):
         """Parse sitemap.xml file."""
         if response.status == 200:
             self.seo_data["sitemap"] = response.text
-            self.logger.info("✅ Sitemap.xml file found and processed.")
+            self.logger.info("Sitemap.xml file found and processed.")
         else:
             self.seo_data["sitemap"] = "Missing"
-            self.logger.warning("⚠️ Sitemap.xml file not found.")
+            self.logger.warning("Sitemap.xml file not found.")
 
     def handle_missing_sitemap(self, failure):
         """Handle missing sitemap.xml gracefully."""
         self.seo_data["sitemap"] = "Missing"
-        self.logger.warning("⚠️ Sitemap.xml file not found (handled gracefully).")
+        self.logger.warning("Sitemap.xml file not found (handled gracefully).")
 
     def parse(self, response):
         """Extracts SEO data and follows internal links."""
@@ -312,16 +311,15 @@ class SEOAuditSpider(scrapy.Spider):
             "securityheaders_io_report": self.seo_data.get("securityheaders_io_report", "Unknown"),
         }
 
-        # Extract issues from SSL certificate and security headers
         ssl_issues = self.extract_ssl_issues(self.seo_data.get("ssl_cert", {}))
         security_header_issues = self.extract_security_header_issues(self.seo_data.get("security_headers", {}))
 
-        # Combine all issues
+
         rule_checker = SEORuleChecker(seo_data)
         seo_issues = rule_checker.analyze()
         all_issues = ssl_issues + security_header_issues + seo_issues
 
-        # Generate AI recommendations
+
         seo_data["issues_detected"] = all_issues
         seo_data["ai_recommendations"] = get_recommendations(all_issues)
 
@@ -345,7 +343,7 @@ class SEOAuditSpider(scrapy.Spider):
 
     def close_spider(self, spider):
         """Runs the report generator after Scrapy finishes crawling."""
-        print("✅ Scrapy crawl complete. Generating SEO report...")
+        print("Scrapy crawl complete. Generating SEO report...")
 
         orphan_pages = self.all_pages - self.linked_pages
         if orphan_pages:

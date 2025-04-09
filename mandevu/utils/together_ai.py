@@ -2,7 +2,7 @@ import requests
 import json
 import os
 
-# Load your Together AI API key from an environment variable
+
 TOGETHER_AI_API_KEY = os.getenv("TOGETHER_AI_API_KEY")
 
 def get_recommendations(issues_detected):

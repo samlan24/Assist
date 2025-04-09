@@ -10,7 +10,7 @@ class SEORuleChecker:
         if not title or title == "No Title Tag":
             self.issues.append("Missing title tag.")
         elif len(title) < 30 or len(title) > 60:
-            self.issues.append("⚠️ Title tag length should be between 30-60 characters.")
+            self.issues.append("Title tag length should be between 30-60 characters.")
 
         description = self.seo_data.get("meta_description", "")
         if not description or description == "No Description Available":
@@ -28,7 +28,7 @@ class SEORuleChecker:
         """Check if robots meta tag is missing or set to noindex."""
         robots = self.seo_data.get("meta_robots", "")
         if not robots or robots == "No Robots Tag":
-            self.issues.append("⚠️ No robots meta tag found.")
+            self.issues.append("No robots meta tag found.")
         elif "noindex" in robots:
             self.issues.append("Page is set to noindex (won't appear in search results).")
 
@@ -55,7 +55,7 @@ class SEORuleChecker:
         for level in heading_order:
             if headings[level]:
                 if last_level and int(level[1]) > last_level + 1:
-                    self.issues.append(f"⚠️ Heading structure issue: Found {level} without an H{last_level} above it.")
+                    self.issues.append(f"Heading structure issue: Found {level} without an H{last_level} above it.")
                 last_level = int(level[1]) if headings[level] else last_level
 
 
@@ -131,10 +131,10 @@ class SEORuleChecker:
         robots_txt = self.seo_data.get("robots_txt", "")
 
         if not sitemap_url:
-            self.issues.append("❌ No sitemap.xml detected. A sitemap helps search engines crawl your site efficiently.")
+            self.issues.append("No sitemap.xml detected. A sitemap helps search engines crawl your site efficiently.")
 
         if sitemap_url and "Sitemap:" not in robots_txt:
-            self.issues.append("⚠️ Sitemap.xml is missing from robots.txt. Consider adding it for better indexing.")
+            self.issues.append("Sitemap.xml is missing from robots.txt. Consider adding it for better indexing.")
 
 
     def check_robots_txt(self):
@@ -142,13 +142,13 @@ class SEORuleChecker:
         robots_txt = self.seo_data.get("robots_txt", "")
 
         if not robots_txt:
-            self.issues.append("❌ No robots.txt file found. This file helps control how search engines crawl your site.")
+            self.issues.append("No robots.txt file found. This file helps control how search engines crawl your site.")
 
         if "User-agent: *" not in robots_txt:
-            self.issues.append("⚠️ robots.txt is missing a default User-agent directive.")
+            self.issues.append("robots.txt is missing a default User-agent directive.")
 
         if "Disallow: /" in robots_txt:
-            self.issues.append("⚠️ robots.txt is blocking all search engines from crawling the site. Review your settings.")
+            self.issues.append("robots.txt is blocking all search engines from crawling the site. Review your settings.")
 
 
     def check_structured_data(self):
